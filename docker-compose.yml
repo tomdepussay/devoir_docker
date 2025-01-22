@@ -1,0 +1,91 @@
+services:
+  nginx1:
+    image: nginx:latest
+    container_name: nginx1
+    ports:
+      - "81:80"
+      - "4441:443"
+    volumes:
+      - ./app:/var/www/html
+      - ./nginx/nginx1.conf:/etc/nginx/conf.d/default.conf
+      - ./certs:/etc/nginx/certs
+    depends_on:
+      - php1
+      - certs_generator
+
+  nginx2:
+    image: nginx:latest
+    container_name: nginx2
+    ports:
+      - "82:80"
+      - "4442:443"
+    volumes:
+      - ./app_second:/var/www/html
+      - ./nginx/nginx2.conf:/etc/nginx/conf.d/default.conf
+      - ./certs:/etc/nginx/certs
+    depends_on:
+      - php2
+      - certs_generator
+
+  certs_generator:
+    image: alpine:latest
+    container_name: certs_generator
+    command: sh -c "apk add openssl && /scripts/generate-certs.sh"
+    volumes:
+      - ./certs:/etc/nginx/certs
+      - ./scripts:/scripts
+
+  php1:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    container_name: php1
+    volumes:
+      - ./app:/var/www/html
+    environment:
+      - DB_HOST=mysql
+      - DB_DATABASE=tp_docker
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+    depends_on:
+      - mysql
+
+  php2:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    container_name: php2
+    volumes:
+      - ./app_second:/var/www/html
+    environment:
+      - DB_HOST=mysql
+      - DB_DATABASE=tp_docker
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tp_docker
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
+
+  phpmyadmin: 
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    ports:
+      - "83:80"
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: root
+    depends_on:
+      - mysql
+
+volumes:
+  db_data:
