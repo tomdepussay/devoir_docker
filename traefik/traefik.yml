@@ -1,0 +1,29 @@
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    address: ":443"
+
+certificatesResolvers:
+  myresolver:
+    acme:
+      email: depussay.tom1@gmail.com
+      storage: /certs/acme.json
+      tlsChallenge: {}
+
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/site1.local.crt
+        keyFile: /certs/site1.local.key
+
+providers:
+  docker:
+    exposedByDefault: false
